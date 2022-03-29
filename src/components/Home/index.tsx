@@ -14,20 +14,20 @@ import {
   CommentOutlined
 } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
-
+import { GiMightySpanner } from 'react-icons/gi'
+import { FaMotorcycle } from 'react-icons/fa'
+import { AiOutlineAppstore } from 'react-icons/ai'
+import { RiAdminLine } from 'react-icons/ri'
 
 export default function Home({children, selected, container}: any) {  
-  console.log(selected, 'ley')  
   return (
     <Layout>
       <S.SidersTyled
         breakpoint="lg"
         collapsedWidth="0"
         onBreakpoint={broken => {
-          console.log(broken);
         }}
         onCollapse={(collapsed, type) => {
-          console.log(collapsed, type);
         }}
       >
         <S.Image src={Logo}/>
@@ -37,17 +37,18 @@ export default function Home({children, selected, container}: any) {
           defaultOpenKeys={container ? container : ['sites']}
           style={{ height: '100%', borderRight: 0, width: 150}}
         >
-          <S.SubMenuStyled key="sites" icon={<UserOutlined />} title="Sites">
+          <S.SubMenuStyled key="sites" icon={<RiAdminLine />} title="Sites">
             <S.Description key="1" icon={ <FileImageOutlined />}><Link to="/images" />Imagens</S.Description>
             <S.Description key="2" icon={<IdcardOutlined />}><Link to="/planos" />Planos</S.Description>
             <S.Description key="3" icon={<QuestionOutlined />}><Link to="/perguntas" />Perguntas</S.Description>
             <S.Description key="4" icon={<CommentOutlined />}><Link to="/depoimentos" />Depoimentos</S.Description>
           </S.SubMenuStyled> 
-          <S.SubMenuStyled key="aplicativos" icon={<UserOutlined />} title="Aplicativos">
+          <S.SubMenuStyled key="aplicativos" icon={<AiOutlineAppstore />} title="Aplicativos">
             <S.Description key="5" icon={<UsergroupAddOutlined />}><Link to="/clientes" />Clientes</S.Description>
             <S.Description key="6" icon={<BellOutlined />}><Link to="/notificacoes" />Notificações</S.Description>
-            <S.Description key="7" icon={<VideoCameraOutlined />}><Link to="/motos" />Motos</S.Description>
-            <S.Description key="8" icon={<BarcodeOutlined />}><Link to="/boletos" />Boletos</S.Description>
+            <S.Description key="7" icon={<FaMotorcycle />}><Link to="/motos" />Motos</S.Description>
+            <S.Description key="8" icon={<GiMightySpanner />}><Link to="/manutencao" />Manutenção</S.Description>
+            <S.Description key="9" icon={<BarcodeOutlined />}><Link to="/pagamentos" />Pagamentos</S.Description>
           </S.SubMenuStyled>
         </S.Title>
           

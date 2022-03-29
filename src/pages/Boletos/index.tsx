@@ -1,30 +1,32 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Home from '../../components/Home';
-import { Modal, Form, Input, Table, Tag, Checkbox, Select, Upload } from 'antd';
+import { Modal, Form, Input, Table,Select } from 'antd';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import * as S from './styles'
-import { Tabs } from 'antd';
-import { MaskedInput } from 'antd-mask-input';
-import { FormPf } from '../../components/NovoClienteForm';
-import { FormCnpj } from '../../components/NovoClienteFormCnpj';
 import { FaPen , FaTrashAlt} from 'react-icons/fa'
-
-const { TabPane } = Tabs;
+import { Cliente } from '../Clientes/types';
+import api from '../../service/api';
+import { toast } from 'react-toastify';
 
 export default function Notificacoes() {  
   const [ modal, setModal] = useState(false)
-  const { TextArea, Search  } = Input;
-  function handleOk() {
-    
-  }
+  const [ clientes, setClientes ] = useState<Cliente[]>([] as Cliente[])
   const { Option } = Select;
-  const onFinish = (values: any) => {
-    console.log('Received values of form: ', values);
-  };
+  
+  useEffect(() => {
+    async function getVeiculo() {
+      await api.get(`clientes`)
+      .then(response => {
+        setClientes(response.data)
+      }).catch(function (error) {
+        toast.error('Erro ao buscar Clientes')
+      });
+    }
+    getVeiculo();
+  }, []);
 
-  function callback(key: any) {
-    console.log(key);
-  }
+  const onFinish = (values: any) => {
+  };
 
 
   function confirm() {
@@ -104,7 +106,7 @@ export default function Notificacoes() {
 
   return (
   <>
-    <Home selected={['8']} container={['aplicativos']}>
+    <Home selected={['9']} container={['aplicativos']}>
       <S.ContainerModal>
         <S.Title style={{fontWeight: 'bold', fontSize: '20px'}}>
             Boleto
@@ -121,7 +123,7 @@ export default function Notificacoes() {
       </S.Container> 
     </Home>
 
-    <S.ModalComponent footer={null} title="Novo Boleto" visible={modal} onOk={handleOk} onCancel={() => setModal(!modal)}>
+    <S.ModalComponent footer={null} title="Novo Boleto" visible={modal} onCancel={() => setModal(!modal)}>
     <S.ContainerForm>
         <Form
             name="normal_login"
@@ -147,8 +149,10 @@ export default function Notificacoes() {
               hasFeedback
             >
               <Select >
-                <Option value="china">China</Option>
-                <Option value="usa">U.S.A</Option>
+              {clientes.length > 0 &&
+                  clientes.map((item, index) => (
+                  <Option value={item.idCliente}>{item.nomeCliente}</Option>
+                )) }
               </Select>
             </Form.Item>
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Home from '../../components/Home';
 import * as S from './styles'
 import { 
@@ -6,9 +6,25 @@ import {
   IdcardOutlined,
   BarcodeOutlined,
 } from '@ant-design/icons';
+import api from '../../service/api';
 
 export default function HomePage({children}: any) {  
+  const [ data, setData ] = useState({})
   
+
+  useEffect(() => {
+    async function getQuestion() {
+        await api.get(`Planos`)
+            .then(response => {
+              setData(response.data)
+            }).catch(function (error) {
+            });
+    }
+
+    getQuestion();
+}, []);
+
+
   return (
     <Home>
       <S.Container>

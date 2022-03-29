@@ -50,6 +50,7 @@ export const Title = styled(Menu)`
 `
 export const Description = styled(Menu.Item)`
     background-color: transparent;
+    width: 200px;
     &:hover{
         color: #F14902 !important;
     }
@@ -85,6 +86,7 @@ export const SubMenuStyled = styled(SubMenu)`
     ul{
         background-color: transparent !important;
         color: #fff;
+        width: 170px;
         &:hover{
             color: #F14902 !important;
         }

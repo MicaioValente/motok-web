@@ -1,106 +1,133 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Home from '../../components/Home';
-import { Modal, Form, Input, Table, Tag, Checkbox, Select, Upload } from 'antd';
+import { Modal, Form, Input, Table, Select} from 'antd';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import * as S from './styles'
-import { Tabs } from 'antd';
-import { MaskedInput } from 'antd-mask-input';
-import { FormPf } from '../../components/NovoClienteForm';
-import { FormCnpj } from '../../components/NovoClienteFormCnpj';
 import { FaPen , FaTrashAlt} from 'react-icons/fa'
+import { Cliente } from '../Clientes/types';
+import api from '../../service/api';
+import { toast } from 'react-toastify';
 
-const { TabPane } = Tabs;
+export type Notificacoes = {
+  idNotificacao: 0
+  nomeNotificacao: string
+  descricaoNotificacao: string
+  ativo: string
+  cliente: Cliente
+}
+
 
 export default function Notificacoes() {  
   const [ modal, setModal] = useState(false)
   const { TextArea, Search  } = Input;
-  function handleOk() {
-    
-  }
+  const [ data, setData ] = useState<Notificacoes[]>([] as Notificacoes[])
+  const [ clientes, setClientes ] = useState<Cliente[]>([] as Cliente[])
+  const [form] = Form.useForm();
+  const [ itemModal, setItemModal] = useState<Notificacoes>({} as Notificacoes)
   const { Option } = Select;
-  const onFinish = (values: any) => {
-    console.log('Received values of form: ', values);
-  };
 
-  function callback(key: any) {
-    console.log(key);
+  useEffect(() => {
+    async function getDepoimento() {
+    await api.get(`Notificacao`)
+      .then(response => {
+        setData(response.data)
+      }).catch(function (error) {
+        toast.error('Erro ao buscar Notificações')
+      });
+    await api.get(`clientes`)
+      .then(response => {
+        setClientes(response.data)
+      }).catch(function (error) {
+        toast.error('Erro ao buscar Clientes')
+      });
+    }
+    getDepoimento();
+  }, []);
+
+  useEffect(() => {
+    if(!modal){
+      form.resetFields()
+      setItemModal({} as Notificacoes)
+    }
+  }, [modal])
+
+
+  function handleDelete(id: any) {
+    api.delete(`Notificacao/${id}` ).then(function(response) {
+      toast.success('Notificação excluida')
+      setData(data.filter(item => item.idNotificacao!== id))
+    }).catch(function(response) {
+      toast.error('Notificação não foi excluida')
+    })
   }
 
-
-  function confirm() {
-    Modal.confirm({
+    function confirm(id: any) {
+      Modal.confirm({
       title: 'Confirmar',
       icon: <ExclamationCircleOutlined />,
       content: 'Deseja Excluir a Notificação?',
       okText: 'Excluir',
       cancelText: 'Cancelar',
-      onOk: () => console.log('asdasda')
-    });
-  }
+      onOk: () => handleDelete(id)
+      })
+    }
 
+  const onFinish = (values: any) => {
+    console.log('values', values)
+    if(itemModal?.idNotificacao){
+      console.log('values EDITANDO', values)
+
+      onEdit(values)
+      return
+    }
+    api.post('Notificacao', values ).then(function(response) {
+      setModal(false)
+  }).catch(function(response) {
+    toast.error('Notificação não foi salva com sucesso')
+    })
+  };
+
+  const onEdit = (values: Notificacoes) => {
+    api.put(`Notificacao/${itemModal.idNotificacao}`, values ).then(function(response) {
+        setModal(false)
+    }).catch(function(response) {
+      toast.error('Notificação não foi salva com sucesso')
+      })  
+  };
+
+  const setModalAndItem = (item:Notificacoes) => {
+    setModal(!modal)
+    form.setFieldsValue(item)
+    setItemModal(item)
+  }
 
   const columns = [
     {
-      title: 'Cód',
-      dataIndex: 'cod',
-      key: 'cod',
-      render: (text: string) => <a>{text}</a>,
-    },
-    {
-      title: 'Name',
-      dataIndex: 'name',
-      key: 'name',
+      title: 'nome',
+      dataIndex: 'nomeNotificacao',
+      key: 'nomeNotificacao',
       render: (text: string) => <a>{text}</a>,
     },
     {
       title: 'Descrição',
-      dataIndex: 'descricao',
-      key: 'descricao',
+      dataIndex: 'descricaoNotificacao',
+      key: 'descricaoNotificacao',
     },
     {
       title: 'Cliente',
       dataIndex: 'cliente',
       key: 'cliente',
-      render: (text: string) => <a>{text}</a>,
+      render: (text: string, item: Notificacoes) => <a>{item.cliente.nomeCliente}</a>,
     },
     {
       title: 'Ação',
-      render: (Ação: string) => (<>
-        <FaPen onClick={() => setModal(!modal)} color='#F14902' style={{cursor: 'pointer', marginRight: '10px'}}/>
-        <FaTrashAlt  onClick={confirm}  color='#696969'/>
+      dataIndex: 'idNotificacao',
+      key: 'idNotificacao',
+      render: (Ação: string, item: Notificacoes) => (<>
+        <FaPen onClick={() => setModalAndItem(item)} color='#F14902' style={{cursor: 'pointer', marginRight: '10px'}}/>
+        <FaTrashAlt  onClick={() => confirm(item.idNotificacao)}  color='#696969'  style={{cursor: 'pointer'}}/>
         </>
       ),
-    },
-  ];
-
-  const data = [
-    {
-      key: '1',
-      cod: '111',
-      name: 'John Brown',
-      descricao: '123.123.132-44 123.123.132-44 123.123.132-44 123.123.132-44 123.123.132-44 ',
-      cliente: 'teste@gmail.com',
-    },
-    {
-      key: '1',
-      cod: '111',
-      name: 'John Brown',
-      descricao: '123.123.132-44 123.123.132-44 123.123.132-44 123.123.132-44 123.123.132-44 ',
-      cliente: 'teste@gmail.com',
-    },
-    {
-      key: '1',
-      cod: '111',
-      name: 'John Brown',
-      descricao: '123.123.132-44 123.123.132-44 123.123.132-44 123.123.132-44 123.123.132-44 ',
-      cliente: 'teste@gmail.com',
-    },
-    {
-      key: '1',
-      cod: '111',
-      name: 'John Brown',
-      descricao: '123.123.132-44 123.123.132-44 123.123.132-44 123.123.132-44 123.123.132-44 ',
-      cliente: 'teste@gmail.com',
     },
   ];
 
@@ -125,38 +152,38 @@ export default function Notificacoes() {
       </S.Container> 
     </Home>
 
-    <S.ModalComponent footer={null} title="Nova Notificação" visible={modal} onOk={handleOk} onCancel={() => setModal(!modal)}>
+    <S.ModalComponent footer={null} title={itemModal?.idNotificacao ? 'Editar Notificação' : 'Nova Notificação'} visible={modal} onCancel={() => setModal(!modal)}>
     <S.ContainerForm>
         <Form
-            name="normal_login"
-            className="login-form"
             layout="vertical"
-            initialValues={{ remember: true }}
             onFinish={onFinish}
+            form={form}
           >
             <Form.Item
                 label="Nome da notificação"
-                name="nome"
+                name="nomeNotificacao"
             >
               <Input  />
             </Form.Item>
-              <Form.Item name={'Descrição da Notificação'} label="Descrição da Notificação">
+              <Form.Item name='descricaoNotificacao' label="Descrição da Notificação">
                 <TextArea  autoSize={{ minRows: 3, maxRows: 5 }} />
               </Form.Item>
 
               <Form.Item
-                name="estatoClienteId"
                 label="Cliente que irá receber a notificação"
+                name="clienteId"
                 hasFeedback
               >
                 <Select placeholder="Escolha um cliente para notificar">
-                  <Option value="china">China</Option>
-                  <Option value="usa">U.S.A</Option>
+                {clientes.length > 0 &&
+                clientes.map((item, index) => (
+                  <Option value={item.idCliente}>{item.nomeCliente}</Option>
+                )) }
                 </Select>
               </Form.Item>
             <Form.Item>
               <S.ButtonForm type="primary" htmlType="submit" className="login-form-button">
-                Cadastrar nova notificação
+                {itemModal?.idNotificacao ? 'Editar notificação' : ' Cadastrar nova notificação'}
               </S.ButtonForm>
             </Form.Item>
           </Form>

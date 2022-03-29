@@ -1,68 +1,76 @@
 import React, { useEffect, useState } from 'react';
 import Home from '../../components/Home';
-import { Modal, Form, Input, Table, Select } from 'antd';
+import { Modal, Form, Input, Table, Select, DatePicker } from 'antd';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import * as S from './styles'
 import { FaPen , FaTrashAlt} from 'react-icons/fa'
 import api from '../../service/api';
 import { Cliente } from '../Clientes/types';
 import { toast } from 'react-toastify';
+import { Motos } from '../Motos';
 
-export type Motos = {
-    idVeiculo: number,
-    marcaModelo: string
-    placa: string
-    renavam: string
-    chassi: number,
-    anoFabricacao: number,
-    anoModelo: number,
-    datecreate: string
-    datemodified: string
-    cliente: Cliente
+export type Manutencao = {
+  idManutencao: number,
+  nomeManutencao: string,
+  descricaoManutencao: string,
+  dataEntrada: string,
+  dataEntrega: string,
+  cliente: Cliente
 }
 
-export default function Notificacoes() {  
+export default function Manutencao() {  
   const [ modal, setModal] = useState(false)
-  const [ data, setData ] = useState<Motos[]>([] as Motos[])
-  const [ clientes, setClientes ] = useState<Cliente[]>([] as Cliente[])
+  const { TextArea, Search  } = Input;
+  const [ data, setData ] = useState<Manutencao[]>([] as Manutencao[])
   const [form] = Form.useForm();
-  const [ itemModal, setItemModal] = useState<Motos>({} as Motos)
-  const { Option } = Select;
+  const [ itemModal, setItemModal] = useState<Manutencao>({} as Manutencao)
+  const { RangePicker } = DatePicker;
+  const [ motos, setMotos ] = useState<Motos[]>([] as Motos[])
   
   useEffect(() => {
     async function getVeiculo() {
-    await api.get(`veiculo`)
-      .then(response => {
-        setData(response.data)
-      }).catch(function (error) {
-        toast.error('Erro ao buscar Motos')
-      });
-      await api.get(`clientes`)
-      .then(response => {
-        setClientes(response.data)
-      }).catch(function (error) {
-        toast.error('Erro ao buscar Clientes')
-      });
+      
     }
     getVeiculo();
   }, []);
 
   useEffect(() => {
+    async function getManutencoes() {
+    await api.get(`manutencoes`)
+      .then(response => {
+        setData(response.data)
+      }).catch(function (error) {
+        toast.error('Erro ao buscar Manutenções')
+      });
+      await api.get(`veiculo`)
+      .then(response => {
+        setMotos(response.data)
+      }).catch(function (error) {
+        toast.error('Erro ao buscar Clientes')
+      });
+    }
+    getManutencoes();
+  }, []);
+
+  useEffect(() => {
     if(!modal){
       form.resetFields()
-      setItemModal({} as Motos)
+      setItemModal({} as Manutencao)
     }
   }, [modal])
 
+
   function handleDelete(id: any) {
-    api.delete(`veiculo/${id}` ).then(function(response) {
-      toast.success('Moto excluida')
-      setData(data.filter(item => item.idVeiculo !== id))
+    api.delete(`manutencoes/${id}` ).then(function(response) {
+      toast.success('Manutenção excluida')
+      setData(data.filter(item => item.idManutencao !== id))
     }).catch(function(response) {
-      toast.error('Moto não foi excluida')
+      toast.error('Manutenção não foi excluida')
     })
   }
-  
+
+  const { Option } = Select;
+
   const onFinish = (values: any) => {
 
     let teste = {
@@ -74,37 +82,41 @@ export default function Notificacoes() {
       anoModelo: 2011,
     }
 
-    if(itemModal?.idVeiculo){
+    if(itemModal?.idManutencao){
       onEdit(values)
       return
     }
-    api.post('veiculo', teste ).then(function(response) {
+    api.post('manutencoes', teste ).then(function(response) {
       setModal(false)
     }).catch(function(response) {
-      toast.error('Moto não foi salva com sucesso')
+      toast.error('Manutenção não foi salva com sucesso')
       })
   };
   
-  const onEdit = (values: Motos) => {
-    api.put(`veiculo/${itemModal.idVeiculo}`, values ).then(function(response) {
+  const onEdit = (values: Manutencao) => {
+    api.put(`manutencoes/${itemModal.idManutencao}`, values ).then(function(response) {
         setModal(false)
     }).catch(function(response) {
-      toast.error('Moto não foi salva com sucesso')
+      toast.error('Manutenção não foi salva com sucesso')
       })  
   };
+
+  function callback(key: any) {
+  }
+
 
   function confirm(id: any) {
     Modal.confirm({
       title: 'Confirmar',
       icon: <ExclamationCircleOutlined />,
-      content: 'Deseja Excluir a Moto?',
+      content: 'Deseja Excluir a Manutenção?',
       okText: 'Excluir',
       cancelText: 'Cancelar',
       onOk: () => handleDelete(id)
     });
   }
 
-  const setModalAndItem = (item:Motos) => {
+  const setModalAndItem = (item:Manutencao) => {
     setModal(!modal)
     form.setFieldsValue(item)
     setItemModal(item)
@@ -135,9 +147,9 @@ export default function Notificacoes() {
     },
     {
       title: 'Ação',
-      render: (_: string, item: Motos) => (<>
+      render: (_: string, item: Manutencao) => (<>
         <FaPen onClick={() => setModalAndItem(item)} color='#F14902' style={{cursor: 'pointer', marginRight: '10px'}}/>
-        <FaTrashAlt  onClick={() => confirm(item.idVeiculo)}  color='#696969'/>
+        <FaTrashAlt  onClick={() => confirm(item.idManutencao)} style={{cursor: 'pointer'}} color='#696969'/>
         </>
       ),
     },
@@ -147,10 +159,10 @@ export default function Notificacoes() {
 
   return (
   <>
-    <Home selected={['7']} container={['aplicativos']}>
+    <Home selected={['8']} container={['aplicativos']}>
       <S.ContainerModal>
         <S.Title style={{fontWeight: 'bold', fontSize: '20px'}}>
-            Motos
+        Manutenções
         </S.Title>
         <S.ButtonNovo onClick={() => setModal(!modal)}>
           Nova +
@@ -164,7 +176,7 @@ export default function Notificacoes() {
       </S.Container> 
     </Home>
 
-    <S.ModalComponent footer={null} title={itemModal?.idVeiculo ? 'Editar Moto' : 'Nova Moto'} visible={modal} onCancel={() => setModal(!modal)}>
+    <S.ModalComponent footer={null} title={itemModal?.idManutencao ? 'Editar Manutenção' : 'Nova Manutenção'} visible={modal} onCancel={() => setModal(!modal)}>
     <S.ContainerForm>
         <Form
             layout="vertical"
@@ -173,74 +185,38 @@ export default function Notificacoes() {
             form={form}
           >
             <Form.Item
-                label="Marca/Modelo"
-                name="marcaModelo"
+                label="Nome da manutenção"
+                name="nomeManutencao"
             >
               <Input  />
             </Form.Item>
 
-            <Form.Item style={{ marginBottom: 0 }}>
-              <Form.Item
-                label="Placa"
-                name="placa"
-                rules={[{  message: 'Insira o Preço!'}]}
-                style={{ display: 'inline-block', width: 'calc(32%)' }}
-              >
-                <Input  />
+            <Form.Item  
+                label="Descrição da manutenção"
+                name={'descricaoManutencao'}>
+                <TextArea  autoSize={{ minRows: 3, maxRows: 5 }} />
               </Form.Item>
 
-              <Form.Item
-                label="Renavam"
-                name="renavam"
-                style={{ display: 'inline-block', width: 'calc(32%)', margin: '0 8px' }}
-              >
-                <Input  />
+              <Form.Item name="range-picker" label="RangePicker" >
+                <RangePicker />
               </Form.Item>
-
-              <Form.Item
-                label="Chassi"
-                name="chassi"
-                style={{ display: 'inline-block', width: 'calc(32%)',  }}
-              >
-                <Input />
-              </Form.Item>
-            </Form.Item>
-            <Form.Item style={{ marginBottom: 0 }}>
-              <Form.Item
-                label="Ano Fabricação"
-                name="anoFabricacao"
-                rules={[{  message: 'Insira o Preço!'}]}
-                style={{ display: 'inline-block', width: 'calc(48%)' }}
-              >
-                <Input  />
-              </Form.Item>
-
-              <Form.Item
-                label="Ano Modelo"
-                name="anoModelo"
-                style={{ display: 'inline-block', width: 'calc(48%)', margin: '0 8px' }}
-              >
-                <Input  />
-              </Form.Item>
-            </Form.Item>
 
 
               <Form.Item
-                label="Escolha uma opção caso haja um cliente"
+                label="Escolha um moto"
                 name="clienteId"
                 hasFeedback
               >
-                <Select placeholder="Escolha um cliente para notificar">
-                {clientes.length > 0 &&
-                  clientes.map((item, index) => (
-                  <Option value={item.idCliente}>{item.nomeCliente}</Option>
+                <Select placeholder="Escolha uma Moto">
+                {motos.length > 0 &&
+                  motos.map((item, index) => (
+                  <Option value={item.idVeiculo}>{item.marcaModelo + ' - ' + item.placa}</Option>
                 )) }
                 </Select>
               </Form.Item>
             <Form.Item>
               <S.ButtonForm type="primary" htmlType="submit" className="login-form-button">
-                
-                {itemModal?.idVeiculo ? 'Editar Moto' : 'Cadastrar Moto'}
+                {itemModal?.idManutencao ? 'Editar Manutenção' : 'Cadastrar Manutenção'}
               </S.ButtonForm>
             </Form.Item>
           </Form>

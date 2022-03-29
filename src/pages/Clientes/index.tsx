@@ -1,133 +1,205 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Home from '../../components/Home';
-import { FaPen } from 'react-icons/fa'
-import { Modal, Form, Input, Table, Tag, Checkbox, Select, Upload } from 'antd';
+import { FaPen, FaTrashAlt } from 'react-icons/fa'
+import { Modal, Table, Tag, Checkbox, Select, Form } from 'antd';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import * as S from './styles'
 import { Tabs } from 'antd';
-import { MaskedInput } from 'antd-mask-input';
-import { FormPf } from '../../components/NovoClienteForm';
-import { FormCnpj } from '../../components/NovoClienteFormCnpj';
-
-const { TabPane } = Tabs;
+import FormPf from '../../components/NovoClienteForm';
+import FormCnpj from '../../components/NovoClienteFormCnpj';
+import api from '../../service/api';
+import { toast } from 'react-toastify';
+import { Cliente } from './types';
 
 export default function Clientes() {  
   const [ modal, setModal] = useState(false)
-  const { TextArea, Search  } = Input;
-  function handleOk() {
-    
-  }
+  const [form] = Form.useForm();
+  const [ data, setData ] = useState<Cliente[]>([] as Cliente[])
+  const [ itemModal, setItemModal] = useState<Cliente>({} as Cliente)
+  const { TabPane } = Tabs;
+  const [ defaultActiveKey, setDefaultActiveKey] = useState("1")
+
+  useEffect(() => {
+    async function getClientes() {
+    await api.get(`clientes`)
+      .then(response => {
+        setData(response.data)
+      }).catch(function (error) {
+        toast.error('Erro ao buscar Clientes')
+      });
+    }
+    getClientes();
+  }, []);
+
+  useEffect(() => {
+    if(!modal){
+      form.resetFields()
+      setItemModal({} as Cliente)
+    }
+  }, [modal])
+
   const { Option } = Select;
   const onFinish = (values: any) => {
-    console.log('Received values of form: ', values);
-  };
+    if(values.cnpjCliente){
+      api.post('clientes/pj', values ).then(function(response) {
+        setModal(false)
+      }).catch(function(response) {
+        toast.error('Cliente não foi salvo com sucesso')
+      })
+      return
+    };
 
+
+    let obj = {
+      anoNascimento: "2001",
+      bairroEnderecoCliente: "aaa",
+      cepEnderecoCliente: "89056-530",
+      cidadeClienteId: "494",
+      complementoEnderecoCliente: "aaaa",
+      cpfCliente: "046.374.521-29",
+      diaNascimento: "2",
+      // docCarteiraMotorista: undefined,
+      // docComprovanteResidencia: undefined,
+      emailCliente: "micaiovalente@gmail.com",
+      estatoClienteId: "12",
+      mesNascimento: "10",
+      nomeCliente: "aaaa",
+      nomeMae: "mwe",
+      nomePai: "pai",
+      numEnderecoCliente: "231",
+      ruaEnderecoCliente: "tamarindo",
+      senhaCliente: "aaaaaaa",
+      telefoneCliente: "(47) 9 8899-9033"
+    };
+    if(itemModal?.idCliente){
+      onEdit(values)
+      return
+    }
+    api.post('clientes/pf', values ).then(function(response) {
+        setModal(false)
+    }).catch(function(response) {
+      toast.error('Cliente não foi salvo com sucesso')
+      })
+    };
+  
+    const onEdit = (values: Cliente) => {
+      let valor = {
+        idCliente: itemModal.idCliente,
+      }
+      const dataRequest = Object.assign(values, valor)
+      api.put('clientes', dataRequest ).then(function(response) {
+          setModal(false)
+      }).catch(function(response) {
+        toast.error('Cliente não foi salvo com sucesso')
+        })  
+    };
+  
+  
   function callback(key: any) {
-    console.log(key);
   }
 
 
-  function confirm() {
+  function confirm(id: any) {
     Modal.confirm({
       title: 'Confirmar',
       icon: <ExclamationCircleOutlined />,
       content: 'Deseja Excluir o Plano?',
       okText: 'Excluir',
       cancelText: 'Cancelar',
-      onOk: () => console.log('asdasda')
+      onOk: () => handleDelete(id)
     });
   }
 
+  function handleDelete(id: any) {
+    api.delete(`clientes/${id}` ).then(function(response) {
+      toast.success('Cliente excluido')
+      setData(data.filter(item => item.idCliente !== id))
+    }).catch(function(response) {
+      toast.error('Cliente não foi excluido')
+    })
+  }
 
+  const setModalAndItem = (item:Cliente) => {
+    if(item.cnpjCliente){
+      setDefaultActiveKey('2')
+    }
+    setModal(!modal)
+    form.setFieldsValue(item)
+    setItemModal(item)
+  }
+
+  
   const columns = [
     {
       title: 'Cód',
-      dataIndex: 'cod',
-      key: 'cod',
+      dataIndex: 'codigoCliente',
+      key: 'codigoCliente',
       render: (text: string) => <a>{text}</a>,
     },
     {
-      title: 'Name',
-      dataIndex: 'name',
-      key: 'name',
+      title: 'Nome',
+      dataIndex: 'nomeCliente',
+      key: 'nomeCliente',
       render: (text: string) => <a>{text}</a>,
     },
     {
-      title: 'Cpf',
-      dataIndex: 'cpf',
-      key: 'cpf',
+      title: 'CPF/CNPJ',
+      dataIndex: 'cpfCliente',
+      key: 'cpfCliente',
     },
     {
       title: 'Email',
-      dataIndex: 'email',
-      key: 'email',
+      dataIndex: 'emailCliente',
+      key: 'emailCliente',
     },
     {
       title: 'Plano',
       dataIndex: 'plano',
       key: 'plano',
+      render: (text: string) => <a>{text ? text : 'Sem Plano'}</a>,
+
     },
     {
       title: 'Status',
-      key: 'status',
-      dataIndex: 'status',
-      render: (status: string) => {
+      key: 'aprovacaoId',
+      dataIndex: 'aprovacaoId',
+      render: (status: number) => {
         let color
-          if(status == 'Desativado'){
+        let decricao = ''
+          if(status == 4){
             color = '#2C3034'
-          }else if(status == 'Aprovado'){
+            decricao = 'Desativado'
+          }else if(status == 1){
             color = '#00ff00'
-          }else if(status == 'Em análise'){
+            decricao = 'Aprovado'
+          }else if(status == 3){
             color = '#ffff00'
+            decricao = 'Em análise'
           }
             return (
               <Tag color={color} style={{borderRadius: '4px', color: color == '#ffff00' ? '#000' : '#fff', fontWeight: 'bold'}}>
-                {status.toUpperCase()}
+                {decricao.toUpperCase()}
               </Tag>
             );
           }
     },
     {
       title: 'Ação',
-      render: (Ação: string) => (
-        <FaPen onClick={() => setModal(!modal)} color='#F14902' style={{cursor: 'pointer'}}/>
+      key: 'ativo',
+      dataIndex: 'ativo',
+      render: (value:any, item: Cliente ) => (<>
+        <FaPen onClick={() => setModalAndItem(item)} color='#F14902' style={{cursor: 'pointer', marginRight: '15px'}}/>
+        <FaTrashAlt  onClick={() => confirm(item.idCliente)}  color='#696969' style={{cursor: 'pointer'}} />
+      </>
       ),
     },
     {
       title: 'Ativo',
-      render:(Ação: string) =>  (
-        <Checkbox />
+      key: 'ativo',
+      dataIndex: 'ativo',
+      render:(ativo: number) =>  (
+        <Checkbox checked={ativo == 1}/>
       ),
-    },
-  ];
-
-  const data = [
-    {
-      key: '1',
-      cod: '111',
-      name: 'John Brown',
-      cpf: '123.123.132-44',
-      email: 'teste@gmail.com',
-      plano: 'Semanal',
-      status: 'Desativado',
-    },
-    {
-      key: '2',
-      cod: '2222',
-      name: 'John brabo',
-      cpf: '123.123.132-44',
-      email: 'teste@gmail.com',
-      plano: 'Mensal',
-      status: 'Aprovado',
-    },
-    {
-      key: '3',
-      cod: '2222',
-      name: 'John brabo',
-      cpf: '123.123.132-44',
-      email: 'teste@gmail.com',
-      plano: 'Diatrio',
-      status: 'Em análise',
     },
   ];
 
@@ -148,17 +220,19 @@ export default function Clientes() {
           <S.SearchContainer placeholder="input search text" onSearch={onSearch} enterButton />
       </S.ContainerModal>
       <S.Container >
-        <Table columns={columns} dataSource={data} />
+        {data.length > 0 &&
+          <Table columns={columns} dataSource={data} />
+        }
       </S.Container> 
     </Home>
 
-    <S.ModalComponent footer={null} title="Novo plano" visible={modal} onOk={handleOk} onCancel={() => setModal(!modal)}>
-      <Tabs defaultActiveKey="1" onChange={callback}>
+    <S.ModalComponent footer={null} title="Novo plano" visible={modal} onCancel={() => setModal(!modal)}>
+      <Tabs defaultActiveKey={defaultActiveKey} onChange={callback}>
         <TabPane tab="Cliente Pessoa Física" key="1">
-          <FormPf onFinish={onFinish}/>
+          <FormPf form={form} onFinish={onFinish}/>
         </TabPane>
         <TabPane tab="Cliente Pessoa Jurídica" key="2">
-          <FormCnpj onFinish={onFinish}/>
+          <FormCnpj form={form} onFinish={onFinish}/>
         </TabPane>
       </Tabs>
     </S.ModalComponent>

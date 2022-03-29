@@ -2,18 +2,13 @@ import React, { useState } from 'react';
 import Home from '../../components/Home';
 import * as S from './styles'
 import { FaPen , FaTrashAlt} from 'react-icons/fa'
-import { Modal, Form, Input, Upload } from 'antd';
+import { Modal, Form, Input } from 'antd';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 
 export default function Perguntas() {  
   const [ modal, setModal] = useState(false)
-  const { TextArea } = Input;
-  function handleOk() {
-    
-  }
 
   const onFinish = (values: any) => {
-    console.log('Received values of form: ', values);
   };
   function confirm() {
     Modal.confirm({
@@ -50,7 +45,7 @@ export default function Perguntas() {
 
       </S.Container> 
     </Home>
-    <S.ModalComponent footer={null} title="Responder Pergunta" visible={modal} onOk={handleOk} onCancel={() => setModal(!modal)}>
+    <S.ModalComponent footer={null} title="Responder Pergunta" visible={modal} onCancel={() => setModal(!modal)}>
       <S.ContainerForm>
         <Form
             name="normal_login"

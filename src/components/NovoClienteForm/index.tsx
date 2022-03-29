@@ -1,23 +1,61 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Form, Input, Select, Upload } from 'antd';
 import * as S from './styles'
 import { MaskedInput } from 'antd-mask-input';
+import api from '../../service/api';
+import { toast } from 'react-toastify';
 
 
 
+export type Estados = {
+  id: Number
+  nome: string
+  uf: string
+  ibge: Number
+  pais: Number
+  ddd: string
+}
 
+export type Cidades = {
+  id: Number
+  nome: string
+  uf: string
+  ibge: Number
+}
 
-
-export function FormPf({onFinish}: any) {
+export default function FormPf({onFinish, form}: any) {
   const { Option } = Select;
+  const [ estados, setEstados] = useState<Estados[]>([] as Estados[])
+  const [ cidades, setCidades] = useState<Cidades[]>([] as Cidades[])
+  const [ idEstado, setIdEstado] = useState()
   
+  useEffect(() => {
+    async function getClientes() {
+    await api.get(`util/estados`)
+      .then(response => {
+        setEstados(response.data)
+      }).catch(function (error) {
+        toast.error('Erro ao buscar Estados')
+      });
+    }
+    getClientes();
+  }, []);
+
+  useEffect(() => {
+    async function getClientes() {
+    await api.get(`util/cidades/${idEstado}`)
+      .then(response => {
+        setCidades(response.data)
+      }).catch(function (error) {
+      });
+    }
+    getClientes();
+  }, [idEstado]);
   return(
         <S.ContainerForm>
             <Form
-              name="normal_login"
-              className="login-form"
               layout="vertical"
-              initialValues={{ remember: true }}
+              form={form}
               onFinish={onFinish}
               style={{width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}
             >
@@ -160,9 +198,19 @@ export function FormPf({onFinish}: any) {
                     style={{ display: 'inline-block', width: 'calc(48%)' }}
                     hasFeedback
                   >
-                    <Select placeholder="Escolha uma opção">
-                      <Option value="china">China</Option>
-                      <Option value="usa">U.S.A</Option>
+                    <Select 
+                    onChange={e => setIdEstado(e)} 
+                    placeholder="Escolha uma opção"
+                    showSearch
+                    optionFilterProp="children"
+                    // filterOption={(input, option) => 
+                    //   option?.children.toLowerCase().indexOf(input.toLowerCase()) >= 0 || false
+                    // }
+                    >
+                    {estados.length > 0 &&
+                      estados.map((item, index) => (
+                        <Option value={item.id}>{item.nome}</Option>
+                      )) }
                     </Select>
                   </Form.Item>
 
@@ -172,9 +220,18 @@ export function FormPf({onFinish}: any) {
                     style={{ display: 'inline-block', width: 'calc(48%)' }}
                     hasFeedback
                   >
-                    <Select placeholder="Escolha uma opção">
-                      <Option value="china">China</Option>
-                      <Option value="usa">U.S.A</Option>
+                    <Select 
+                      placeholder="Escolha uma opção"
+                      showSearch
+                      optionFilterProp="children"
+                      // filterOption={(input, option) =>
+                      //   option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                      // }
+                      >
+                    {cidades.length > 0 &&
+                      cidades.map((item, index) => (
+                        <Option value={item.id}>{item.nome}</Option>
+                      )) }
                     </Select>
                   </Form.Item>
                 </Form.Item >

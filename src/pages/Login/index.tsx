@@ -1,13 +1,31 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Form, Input, Button, Checkbox } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import * as S from './styles'
 import Logo from  '../../assets/logo.svg'
+import { useAuth } from '../../hooks/auth';
+import api from '../../service/api';
+import { useNavigate } from 'react-router-dom';
 
 const NormalLoginForm = () => {
-  const onFinish = (values: any) => {
-    console.log('Received values of form: ', values);
-  };
+  const { signIn } = useAuth();
+  let navigate = useNavigate();
+
+  const handleSubmit = useCallback(
+    async (values) => {
+      try {
+        await signIn({
+          email: values.email,
+          password: values.password,
+        });
+
+        navigate('/');
+      } catch (error) {
+        
+      }
+    },
+    [signIn, navigate],
+  );
 
   return (
     <S.Container>
@@ -18,16 +36,16 @@ const NormalLoginForm = () => {
           name="normal_login"
           className="login-form"
           initialValues={{ remember: true }}
-          onFinish={onFinish}
+          onFinish={values => handleSubmit(values)}
         >
           <Form.Item
-            name="user"
+            name="email"
             rules={[{ required: true, message: 'Insira um Email!' }]}
           >
-            <Input prefix={<UserOutlined className="site-form-item-icon" />} placeholder="Usuário" />
+            <Input prefix={<UserOutlined className="site-form-item-icon" />} placeholder="E-mail" />
           </Form.Item>
           <Form.Item
-            name="senha"
+            name="password"
             rules={[{ required: true, message: 'Insira a senha' }]}
           >
             <Input
@@ -48,4 +66,4 @@ const NormalLoginForm = () => {
   );
 };
 
-export default NormalLoginForm
+export default NormalLoginForm;

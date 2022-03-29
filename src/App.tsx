@@ -10,7 +10,8 @@ import Depoimentos from './pages/Depoimentos';
 import Clientes from "./pages/Clientes";
 import Notificacoes from "./pages/Notificacoes";
 import Motos from "./pages/Motos";
-import Boletos from "./pages/Boletos";
+import Pagamentos from "./pages/Boletos";
+import Manutencao from "./pages/Manutencao";
 
 export default function App() {
   return (
@@ -34,7 +35,9 @@ export default function App() {
         
         <Route path="/motos" element={<Motos />} />
         
-        <Route path="/boletos" element={<Boletos />} />
+        <Route path="/pagamentos" element={<Pagamentos />} />
+
+        <Route path="/manutencao" element={<Manutencao />} />
       
       </Routes>
     </BrowserRouter>
