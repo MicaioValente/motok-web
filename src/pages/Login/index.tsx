@@ -6,6 +6,7 @@ import Logo from  '../../assets/logo.svg'
 import { useAuth } from '../../hooks/auth';
 import api from '../../service/api';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const NormalLoginForm = () => {
   const { signIn } = useAuth();
@@ -19,9 +20,13 @@ const NormalLoginForm = () => {
           password: values.password,
         });
 
-        navigate('/');
-      } catch (error) {
-        
+        // navigate('/');
+      } catch (error: any) {
+        console.log(error.response)
+        if(error.response.status == 401 ){
+          toast.error('Usuário não autorizado')
+          return
+        }
       }
     },
     [signIn, navigate],

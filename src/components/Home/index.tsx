@@ -21,7 +21,7 @@ import { RiAdminLine } from 'react-icons/ri'
 
 export default function Home({children, selected, container}: any) {  
   return (
-    <Layout>
+    <S.LayoutStyled>
       <S.SidersTyled
         breakpoint="lg"
         collapsedWidth="0"
@@ -30,12 +30,14 @@ export default function Home({children, selected, container}: any) {
         onCollapse={(collapsed, type) => {
         }}
       >
-        <S.Image src={Logo}/>
+        <Link to="/">
+          <S.Image src={Logo}/>
+        </Link>
         <S.Title
           mode="inline"
           defaultSelectedKeys={selected ? selected : ['1']}
           defaultOpenKeys={container ? container : ['sites']}
-          style={{ height: '100%', borderRight: 0, width: 150}}
+          style={{borderRight: 0, width: 150}}
         >
           <S.SubMenuStyled key="sites" icon={<RiAdminLine />} title="Sites">
             <S.Description key="1" icon={ <FileImageOutlined />}><Link to="/images" />Imagens</S.Description>
@@ -62,5 +64,5 @@ export default function Home({children, selected, container}: any) {
         </S.ContentStyled>
         <S.FooterStyled >MOTOK</S.FooterStyled>
       </S.LayoutStyled>
-  </Layout>
+  </S.LayoutStyled>
   )}

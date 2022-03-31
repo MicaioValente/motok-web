@@ -8,6 +8,7 @@ import api from '../../service/api';
 import { Cliente } from '../Clientes/types';
 import { toast } from 'react-toastify';
 import { Motos } from '../Motos';
+import moment from 'moment';
 
 export type Manutencao = {
   idManutencao: number,
@@ -25,15 +26,9 @@ export default function Manutencao() {
   const [form] = Form.useForm();
   const [ itemModal, setItemModal] = useState<Manutencao>({} as Manutencao)
   const { RangePicker } = DatePicker;
-  const [ motos, setMotos ] = useState<Motos[]>([] as Motos[])
+  const [ motos, setMotos ] = useState<Cliente[]>([] as Cliente[])
+  const [ trigger, setTrigger] = useState(false)
   
-  useEffect(() => {
-    async function getVeiculo() {
-      
-    }
-    getVeiculo();
-  }, []);
-
   useEffect(() => {
     async function getManutencoes() {
     await api.get(`manutencoes`)
@@ -42,7 +37,7 @@ export default function Manutencao() {
       }).catch(function (error) {
         toast.error('Erro ao buscar Manutenções')
       });
-      await api.get(`veiculo`)
+      await api.get(`clientes`)
       .then(response => {
         setMotos(response.data)
       }).catch(function (error) {
@@ -50,7 +45,7 @@ export default function Manutencao() {
       });
     }
     getManutencoes();
-  }, []);
+  }, [trigger]);
 
   useEffect(() => {
     if(!modal){
@@ -72,21 +67,21 @@ export default function Manutencao() {
   const { Option } = Select;
 
   const onFinish = (values: any) => {
-
-    let teste = {
-      marcaModelo: "aaa",
-      placa: "aa",
-      renavam: "aaa",
-      chassi: 2020,
-      anoFabricacao: 2001,
-      anoModelo: 2011,
+    let obj = {
+      nomeManutencao: values.nomeManutencao,
+      descricaoManutencao: values.descricaoManutencao,
+      dataEntrada: values.data[0].format(),
+      dataEntrega: values.data[1].format()
     }
-
+    let dataRequest = Object.assign(obj, values)
+      delete dataRequest.data
+    console.log({dataRequest}, 'opa')
     if(itemModal?.idManutencao){
-      onEdit(values)
+      onEdit(dataRequest)
       return
     }
-    api.post('manutencoes', teste ).then(function(response) {
+    api.post('manutencoes', dataRequest ).then(function(response) {
+      setTrigger(!trigger)
       setModal(false)
     }).catch(function(response) {
       toast.error('Manutenção não foi salva com sucesso')
@@ -95,14 +90,12 @@ export default function Manutencao() {
   
   const onEdit = (values: Manutencao) => {
     api.put(`manutencoes/${itemModal.idManutencao}`, values ).then(function(response) {
-        setModal(false)
+      setTrigger(!trigger)
+      setModal(false)
     }).catch(function(response) {
       toast.error('Manutenção não foi salva com sucesso')
       })  
   };
-
-  function callback(key: any) {
-  }
 
 
   function confirm(id: any) {
@@ -117,33 +110,46 @@ export default function Manutencao() {
   }
 
   const setModalAndItem = (item:Manutencao) => {
+    let data = {
+      data: [moment(item.dataEntrada), moment(item.dataEntrega)]
+    }
+    let dataRequest = Object.assign(data, item)
+
     setModal(!modal)
-    form.setFieldsValue(item)
+    form.setFieldsValue(dataRequest)
     setItemModal(item)
   }
 
   const columns = [
     {
-      title: 'Marca/Modelo',
-      dataIndex: 'marcaModelo',
-      key: 'marcaModelo',
+      title: 'Nome Manutenção',
+      dataIndex: 'nomeManutencao',
+      key: 'nomeManutencao',
       render: (text: string) => <a>{text}</a>,
     },
     {
-      title: 'Placa',
-      dataIndex: 'placa',
-      key: 'placa',
+      title: 'Descrição Manutenção',
+      dataIndex: 'descricaoManutencao',
+      key: 'descricaoManutencao',
       render: (text: string) => <a>{text}</a>,
     },
     {
       title: 'Cliente',
       dataIndex: 'cliente',
       key: 'cliente',
-      render: (text: string) => <a>{text}</a>,
+      render: (text: Cliente) => <a>{text.nomeCliente}</a>,
     },
     {
-      title: 'Data cadastro',
-      dataIndex: 'datecreate',
+      title: 'Data Entrada',
+      dataIndex: 'dataEntrada',
+      key: 'dataEntrada',
+      render: (text: string) => <a>{moment(text).format('MM/DD/YYYY - HH:mm')}</a>,
+    },
+    {
+      title: 'Data Entrega',
+      dataIndex: 'dataEntrega',
+      key: 'dataEntrega',
+      render: (text: string) => <a>{moment(text).format('MM/DD/YYYY - HH:mm')}</a>,
     },
     {
       title: 'Ação',
@@ -156,7 +162,10 @@ export default function Manutencao() {
   ];
 
   const onSearch = (value: any) => console.log(value);
-
+  function disabledDate(current: any) {
+    // Can not select days before today and today
+    return current && current < moment().endOf('day');
+  }
   return (
   <>
     <Home selected={['8']} container={['aplicativos']}>
@@ -192,25 +201,31 @@ export default function Manutencao() {
             </Form.Item>
 
             <Form.Item  
-                label="Descrição da manutenção"
-                name={'descricaoManutencao'}>
-                <TextArea  autoSize={{ minRows: 3, maxRows: 5 }} />
-              </Form.Item>
-
-              <Form.Item name="range-picker" label="RangePicker" >
-                <RangePicker />
-              </Form.Item>
+              label="Descrição da manutenção"
+              name={'descricaoManutencao'}>
+              <TextArea  autoSize={{ minRows: 3, maxRows: 5 }} />
+            </Form.Item>
+            <Form.Item  
+              label="Data da manutenção"
+              name={'data'}
+              // initialValue={[moment(itemModal?.dataEntrada), moment(itemModal?.dataEntrega)]}
+              >
+                
+              {/* <RangePicker defaultPickerValue={[moment(), moment()]} disabledDate={disabledDate}/> */}
+              <RangePicker />
+            </Form.Item>
+                
 
 
               <Form.Item
-                label="Escolha um moto"
+                label="Escolha um cliente"
                 name="clienteId"
                 hasFeedback
               >
-                <Select placeholder="Escolha uma Moto">
+                <Select placeholder="Escolha um Cliente">
                 {motos.length > 0 &&
                   motos.map((item, index) => (
-                  <Option value={item.idVeiculo}>{item.marcaModelo + ' - ' + item.placa}</Option>
+                  <Option value={item.idCliente}>{item.nomeCliente}</Option>
                 )) }
                 </Select>
               </Form.Item>

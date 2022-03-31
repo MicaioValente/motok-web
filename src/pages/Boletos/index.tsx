@@ -1,31 +1,99 @@
 import React, { useEffect, useState } from 'react';
 import Home from '../../components/Home';
-import { Modal, Form, Input, Table,Select } from 'antd';
+import { Modal, Form, Input, Table,Select, Tag } from 'antd';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import * as S from './styles'
 import { FaPen , FaTrashAlt} from 'react-icons/fa'
+import { AiOutlineFilePdf, AiOutlineBarcode, AiOutlineQrcode} from 'react-icons/ai'
 import { Cliente } from '../Clientes/types';
 import api from '../../service/api';
 import { toast } from 'react-toastify';
+import { Planos } from '../Planos';
+
+export type Boleto = {
+  codigoPagamento: string
+  formaPagamento: string
+  dataEmissao: string
+  dataVencimento: string
+  statusPagamento: string
+  urlBoleto: string
+  valor: number
+  imagemBase64QrCode: string
+  codigoCopiaEColaPix: string
+  client: Cliente
+}
 
 export default function Notificacoes() {  
   const [ modal, setModal] = useState(false)
+  const [ data, setData ] = useState<Boleto[]>([] as Boleto[])
   const [ clientes, setClientes ] = useState<Cliente[]>([] as Cliente[])
+  const [ planos, setPlanos ] = useState<Planos[]>([] as Planos[])
   const { Option } = Select;
-  
+  const [form] = Form.useForm();
+  const [ itemModal, setItemModal] = useState<Boleto>({} as Boleto)
+  const [ trigger, setTrigger] = useState(false)
+
   useEffect(() => {
-    async function getVeiculo() {
-      await api.get(`clientes`)
+    async function getBoleto() {
+      await api.get(`boleto`)
       .then(response => {
-        setClientes(response.data)
+        setData(response.data)
       }).catch(function (error) {
-        toast.error('Erro ao buscar Clientes')
+        toast.error('Erro ao buscar Pagamentos')
       });
     }
-    getVeiculo();
-  }, []);
+    getBoleto();
+  }, [trigger]);
+
+  useEffect(() => {
+    async function getBoleto() {
+    await api.get(`clientes`)
+    .then(response => {
+      setClientes(response.data)
+    }).catch(function (error) {
+      toast.error('Erro ao buscar clientes')
+    });
+    await api.get(`planos`)
+    .then(response => {
+      setPlanos(response.data)
+    }).catch(function (error) {
+      toast.error('Erro ao buscar planos')
+    });
+  } 
+  getBoleto()
+  }, [])
+
+  useEffect(() => {
+    if(!modal){
+      form.resetFields()
+      setItemModal({} as Boleto)
+    }
+  }, [modal])
+
 
   const onFinish = (values: any) => {
+    console.log({values})
+    if(itemModal?.dataEmissao){
+      onEdit(values)
+      return
+    }
+    api.post('boleto', values ).then(function(response) {
+    console.log({response})
+    // setTrigger(!trigger)
+    //   setModal(false)
+    }).catch(function(response) {
+      toast.error('Pagamento não foi cadastrado com sucesso')
+    })
+  };
+
+  const onEdit = (values: Cliente) => {
+    console.log({values})
+    api.put('clientes', values ).then(function(response) {
+      setTrigger(!trigger)
+
+    }).catch(function(response) {
+      toast.error('Cliente não foi editado com sucesso')
+      })  
   };
 
 
@@ -43,63 +111,85 @@ export default function Notificacoes() {
 
   const columns = [
     {
-      title: 'Marca/Modelo',
-      dataIndex: 'marca',
-      key: 'marca',
+      title: 'Cód',
+      dataIndex: 'codigoPagamento',
+      key: 'codigoPagamento',
       render: (text: string) => <a>{text}</a>,
     },
     {
-      title: 'Placa',
-      dataIndex: 'placa',
-      key: 'placa',
+      title: 'Tipo',
+      dataIndex: 'codigoCopiaEColaPix',
+      key: 'codigoCopiaEColaPix',
+      render: (text: string) => <a>{text ? 'Pix' : 'Boleto'}</a>,
+    },
+    {
+      title: 'Data emissão',
+      dataIndex: 'dataEmissao',
+      key: 'dataEmissao',
+      render: (text: string) => <a>{text}</a>,
+    },
+    {
+      title: 'Data Vencimento',
+      dataIndex: 'dataVencimento',
+      key: 'dataVencimento',
       render: (text: string) => <a>{text}</a>,
     },
     {
       title: 'Cliente',
-      dataIndex: 'cliente',
-      key: 'cliente',
-      render: (text: string) => <a>{text}</a>,
+      dataIndex: 'client',
+      key: 'client',
+      render: (text: Cliente) => <a>{text?.nomeCliente}</a>,
     },
     {
-      title: 'Data cadastro',
-      dataIndex: 'dataCadastro',
-      key: 'dataCadastro',
+      title: 'CPF/CNPJ',
+      dataIndex: 'client',
+      key: 'client',
+      render: (item: Cliente) => <a>{item?.cpfCliente != '' ? item?.cpfCliente : item?.cnpjCliente}</a>,
     },
     {
-      title: 'Ação',
-      render: (Ação: string) => (<>
-        <FaPen onClick={() => setModal(!modal)} color='#F14902' style={{cursor: 'pointer', marginRight: '10px'}}/>
-        <FaTrashAlt  onClick={confirm}  color='#696969'/>
-        </>
-      ),
-    },
-  ];
-
-  const data = [
-    {
-      key: '1',
-      cod: '111',
-      marca: 'John Brown',
-      placa: '123.123. ',
-      cliente: 'teste@gmail.com',
-      dataCadastro: '2022-02-18 18:47:12',
-    },
-    {
-      key: '1',
-      cod: '111',
-      marca: 'John Brown',
-      placa: '123.123. ',
-      cliente: 'teste@gmail.com',
-      dataCadastro: '2022-02-18 18:47:12',
+      title: 'Status Pagamento',
+      key: 'statusPagamento',
+      // align: 'center',
+      dataIndex: 'statusPagamento',
+      render: (status: string) => {
+        let color
+        let decricao = ''
+          if(status == "pending"){
+            color = '#ffff00'
+            decricao = 'Pendente'
+          }else if(status == "aaaa"){
+            color = '#00ff00'
+            decricao = 'Aprovado'
+          }else if(status == "aaaaa"){
+            color = '#2C3034'
+            decricao = 'Em análise'
+          }
+            return (
+              <Tag color={color} style={{borderRadius: '4px', color: color == '#ffff00' ? '#000' : '#fff', fontWeight: 'bold', fontSize:'10px'}}>
+                {decricao.toUpperCase()}
+              </Tag>
+            );
+          }
     },
     {
-      key: '1',
-      cod: '111',
-      marca: 'John Brown',
-      placa: '123.123. ',
-      cliente: 'teste@gmail.com',
-      dataCadastro: '2022-02-18 18:47:12',
-    },
+      title: 'Ações',
+      dataIndex: 'client',
+      key: 'client',
+      render: (Ação: string, item: Boleto) => {
+        if(item.codigoCopiaEColaPix){  
+          return(
+          <>
+            <AiOutlineBarcode style={{cursor: 'pointer',width: '20px', height:'20px', marginRight: '5px'}}/>
+            <AiOutlineQrcode style={{cursor: 'pointer',width: '20px', height:'20px'}}/>
+          </>
+          )
+        }else{
+          return(
+              <AiOutlineFilePdf onClick={() => setModal(!modal)} color='#fff' style={{cursor: 'pointer',width: '20px', height:'20px', marginRight: '5px'}}/>
+            )
+        }
+      },
+    }
   ];
 
   const onSearch = (value: any) => console.log(value);
@@ -126,25 +216,23 @@ export default function Notificacoes() {
     <S.ModalComponent footer={null} title="Novo Boleto" visible={modal} onCancel={() => setModal(!modal)}>
     <S.ContainerForm>
         <Form
-            name="normal_login"
-            className="login-form"
             layout="vertical"
-            initialValues={{ remember: true }}
             onFinish={onFinish}
+            form={form}
           >
             <Form.Item
-              name="estatoClienteId"
+              name="formaPagamento"
               label="Selecione uma opção de pagamento"
               hasFeedback
             >
               <Select>
-                <Option value="china">China</Option>
-                <Option value="usa">U.S.A</Option>
+                <Option value={0}>Boleto</Option>
+                <Option value={1}>PIX</Option>
               </Select>
             </Form.Item>
 
             <Form.Item
-              name="estatoClienteId"
+              name="clientId"
               label="Selecione um cliente"
               hasFeedback
             >
@@ -157,13 +245,15 @@ export default function Notificacoes() {
             </Form.Item>
 
             <Form.Item
-              name="estatoClienteId"
-              label="Selecione o plano"
+              name="planoId"
+              label="Selecione um Plano"
               hasFeedback
             >
               <Select >
-                <Option value="china">China</Option>
-                <Option value="usa">U.S.A</Option>
+              {planos.length > 0 &&
+                  planos.map((item, index) => (
+                  <Option value={item.idPlanos}>{item.nomePlano + ' - ' + item.valorSemanal + ' - ' + item.valorCaucao}</Option>
+                )) }
               </Select>
             </Form.Item>
             <Form.Item>

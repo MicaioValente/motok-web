@@ -1,9 +1,9 @@
 import styled from 'styled-components'
 
 export const Container = styled.div`
-    flex-direction: row;
     display: flex;
     justify-content: space-around;
+    flex-wrap: wrap;
 `
 
 export const Box = styled.div`
@@ -12,11 +12,12 @@ export const Box = styled.div`
     color: #fff;
     height: 100px;
     border-radius: 10px;
-    padding: 20px;
-    width: fit-content;
+    padding: 20px 80px;
     display: flex;
     justify-content: space-between;
     cursor: pointer;
+    width: 280px;
+    margin-top: 20px;
 `
 export const ContainerTitle = styled.div`
     flex-direction: row;

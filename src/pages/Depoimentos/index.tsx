@@ -22,6 +22,7 @@ export default function Perguntas() {
   const [ data, setData ] = useState<Depoimentos[]>([] as Depoimentos[])
   const [form] = Form.useForm();
   const [ itemModal, setItemModal] = useState<Depoimentos>({} as Depoimentos)
+  const [ trigger, setTrigger] = useState(false)
 
   useEffect(() => {
     async function getDepoimento() {
@@ -33,7 +34,7 @@ export default function Perguntas() {
       });
     }
     getDepoimento();
-  }, []);
+  }, [trigger]);
 
   useEffect(() => {
     if(!modal){
@@ -69,6 +70,7 @@ export default function Perguntas() {
       return
     }
     api.post('Depoimentos', values ).then(function(response) {
+      setTrigger(!trigger)
       setModal(false)
   }).catch(function(response) {
     toast.error('Depoimento não foi salvo com sucesso')
@@ -81,7 +83,8 @@ export default function Perguntas() {
     }
     const dataRequest = Object.assign(values, valor)
     api.put('depoimentos', dataRequest ).then(function(response) {
-        setModal(false)
+      setTrigger(!trigger)
+      setModal(false)
     }).catch(function(response) {
       toast.error('Depoimento não foi salvo com sucesso')
       })  
@@ -117,7 +120,6 @@ export default function Perguntas() {
             </S.Box> 
           ))
         }
-
       </S.Container> 
     </Home>
     <S.ModalComponent footer={null} title={itemModal?.textDepoimento ? 'Editar Depoimento' : 'Novo Depoimento'} visible={modal} onCancel={() => setModal(!modal)}>

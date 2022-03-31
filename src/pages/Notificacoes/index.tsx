@@ -19,12 +19,13 @@ export type Notificacoes = {
 
 export default function Notificacoes() {  
   const [ modal, setModal] = useState(false)
-  const { TextArea, Search  } = Input;
+  const { TextArea } = Input;
   const [ data, setData ] = useState<Notificacoes[]>([] as Notificacoes[])
   const [ clientes, setClientes ] = useState<Cliente[]>([] as Cliente[])
   const [form] = Form.useForm();
   const [ itemModal, setItemModal] = useState<Notificacoes>({} as Notificacoes)
   const { Option } = Select;
+  const [ trigger, setTrigger] = useState(false)
 
   useEffect(() => {
     async function getDepoimento() {
@@ -42,7 +43,7 @@ export default function Notificacoes() {
       });
     }
     getDepoimento();
-  }, []);
+  }, [trigger]);
 
   useEffect(() => {
     if(!modal){
@@ -73,14 +74,12 @@ export default function Notificacoes() {
     }
 
   const onFinish = (values: any) => {
-    console.log('values', values)
     if(itemModal?.idNotificacao){
-      console.log('values EDITANDO', values)
-
       onEdit(values)
       return
     }
     api.post('Notificacao', values ).then(function(response) {
+      setTrigger(!trigger)
       setModal(false)
   }).catch(function(response) {
     toast.error('Notificação não foi salva com sucesso')
@@ -89,7 +88,8 @@ export default function Notificacoes() {
 
   const onEdit = (values: Notificacoes) => {
     api.put(`Notificacao/${itemModal.idNotificacao}`, values ).then(function(response) {
-        setModal(false)
+      setTrigger(!trigger)
+      setModal(false)
     }).catch(function(response) {
       toast.error('Notificação não foi salva com sucesso')
       })  
@@ -173,12 +173,13 @@ export default function Notificacoes() {
                 label="Cliente que irá receber a notificação"
                 name="clienteId"
                 hasFeedback
+                initialValue={itemModal?.cliente?.idCliente}
               >
                 <Select placeholder="Escolha um cliente para notificar">
                 {clientes.length > 0 &&
-                clientes.map((item, index) => (
-                  <Option value={item.idCliente}>{item.nomeCliente}</Option>
-                )) }
+                  clientes.map((item, index) => (
+                    <Option value={item.idCliente}>{item.nomeCliente}</Option>
+                  )) }
                 </Select>
               </Form.Item>
             <Form.Item>

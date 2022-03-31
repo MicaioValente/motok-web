@@ -10,14 +10,18 @@ import FormCnpj from '../../components/NovoClienteFormCnpj';
 import api from '../../service/api';
 import { toast } from 'react-toastify';
 import { Cliente } from './types';
+import moment from 'moment';
 
 export default function Clientes() {  
   const [ modal, setModal] = useState(false)
+  const [ modalPf, setModalPf] = useState(false)
+  const [ modalPj, setModalPj] = useState(false)
   const [form] = Form.useForm();
   const [ data, setData ] = useState<Cliente[]>([] as Cliente[])
   const [ itemModal, setItemModal] = useState<Cliente>({} as Cliente)
   const { TabPane } = Tabs;
   const [ defaultActiveKey, setDefaultActiveKey] = useState("1")
+  const [ trigger, setTrigger] = useState(false)
 
   useEffect(() => {
     async function getClientes() {
@@ -29,7 +33,7 @@ export default function Clientes() {
       });
     }
     getClientes();
-  }, []);
+  }, [trigger]);
 
   useEffect(() => {
     if(!modal){
@@ -41,7 +45,26 @@ export default function Clientes() {
   const { Option } = Select;
   const onFinish = (values: any) => {
     if(values.cnpjCliente){
-      api.post('clientes/pj', values ).then(function(response) {
+      values.dataAberturaEmpresaCliente = values.dataAberturaEmpresaCliente.format()
+      values.docCarteiraMotorista = ''
+      values.docComprovanteResidencia = ''
+      values.anoNascimento = ''
+      values.diaNascimento = ''
+      values.mesNascimento = ''
+      values.nomeMae = ''
+      values.nomePai = ''
+      values.cpfCliente = ''
+      let obj = {
+        codigoCliente: "12345",
+      }
+      let dataRequest = Object.assign(obj, values)
+      if(itemModal?.idCliente){
+        onEdit(dataRequest)
+        return
+      }
+
+      api.post('clientes/pj', dataRequest ).then(function(response) {
+        setTrigger(!trigger)
         setModal(false)
       }).catch(function(response) {
         toast.error('Cliente não foi salvo com sucesso')
@@ -49,50 +72,73 @@ export default function Clientes() {
       return
     };
 
-
     let obj = {
-      anoNascimento: "2001",
-      bairroEnderecoCliente: "aaa",
-      cepEnderecoCliente: "89056-530",
-      cidadeClienteId: "494",
-      complementoEnderecoCliente: "aaaa",
-      cpfCliente: "046.374.521-29",
-      diaNascimento: "2",
-      // docCarteiraMotorista: undefined,
-      // docComprovanteResidencia: undefined,
-      emailCliente: "micaiovalente@gmail.com",
-      estatoClienteId: "12",
-      mesNascimento: "10",
-      nomeCliente: "aaaa",
-      nomeMae: "mwe",
-      nomePai: "pai",
-      numEnderecoCliente: "231",
-      ruaEnderecoCliente: "tamarindo",
-      senhaCliente: "aaaaaaa",
-      telefoneCliente: "(47) 9 8899-9033"
-    };
+      dataAberturaEmpresaCliente: "",
+      inscricaoEstadualCliente: "",
+      codigoCliente: "12345",
+    }
+      let dataRequest = Object.assign(obj, values)
+      dataRequest.docCarteiraMotorista = ''
+      dataRequest.docComprovanteResidencia = ''
+
     if(itemModal?.idCliente){
-      onEdit(values)
+      onEdit(dataRequest)
       return
     }
-    api.post('clientes/pf', values ).then(function(response) {
-        setModal(false)
+    
+
+    api.post('clientes/pf', dataRequest ).then(function(response) {
+      setTrigger(!trigger)
+      setModal(false)
+      toast.success('Cliente Salvo')
     }).catch(function(response) {
       toast.error('Cliente não foi salvo com sucesso')
       })
     };
   
-    const onEdit = (values: Cliente) => {
+  const onEdit = (values: Cliente) => {
+    if(values.cnpjCliente){
       let valor = {
         idCliente: itemModal.idCliente,
+        ativo: 0,
+        tipoClienteId: values.cnpjCliente ? 2 : 1,
       }
       const dataRequest = Object.assign(values, valor)
+      dataRequest.inscricaoEstadualCliente = dataRequest.inscricaoEstadualCliente ? dataRequest.inscricaoEstadualCliente : ''
+      dataRequest.dataAberturaEmpresaCliente = dataRequest.dataAberturaEmpresaCliente ? dataRequest.dataAberturaEmpresaCliente : ''
       api.put('clientes', dataRequest ).then(function(response) {
-          setModal(false)
+        setTrigger(!trigger)
+        setModal(false)
+        setModalPj(false)
+        setModalPf(false)
+  
       }).catch(function(response) {
-        toast.error('Cliente não foi salvo com sucesso')
+        toast.error('Cliente não editado salvo com sucesso')
         })  
-    };
+        return
+    }
+
+    let valor = {
+      idCliente: itemModal.idCliente,
+      cnpjCliente: '',
+      ativo: 0,
+      tipoClienteId: values.cnpjCliente ? 2 : 1,
+    }
+    
+    const dataRequest = Object.assign(values, valor)
+    dataRequest.inscricaoEstadualCliente = dataRequest.inscricaoEstadualCliente ? dataRequest.inscricaoEstadualCliente : ''
+    dataRequest.dataAberturaEmpresaCliente = dataRequest.dataAberturaEmpresaCliente ? dataRequest.dataAberturaEmpresaCliente : ''
+    console.log({dataRequest})
+    api.put('clientes', dataRequest ).then(function(response) {
+      setTrigger(!trigger)
+      setModal(false)
+      setModalPj(false)
+      setModalPf(false)
+
+    }).catch(function(response) {
+      toast.error('Cliente não foi editado com sucesso')
+      })  
+  };
   
   
   function callback(key: any) {
@@ -103,7 +149,7 @@ export default function Clientes() {
     Modal.confirm({
       title: 'Confirmar',
       icon: <ExclamationCircleOutlined />,
-      content: 'Deseja Excluir o Plano?',
+      content: 'Deseja Excluir o Cliente?',
       okText: 'Excluir',
       cancelText: 'Cancelar',
       onOk: () => handleDelete(id)
@@ -121,14 +167,18 @@ export default function Clientes() {
 
   const setModalAndItem = (item:Cliente) => {
     if(item.cnpjCliente){
-      setDefaultActiveKey('2')
+      item.dataAberturaEmpresaCliente = moment(item.dataAberturaEmpresaCliente)
+      setModalPj(!modalPj)
+      form.setFieldsValue(item)
+      setItemModal(item)
+      return
     }
-    setModal(!modal)
+    setModalPf(!modalPf)
     form.setFieldsValue(item)
     setItemModal(item)
   }
 
-  
+  console.log({data})
   const columns = [
     {
       title: 'Cód',
@@ -146,6 +196,8 @@ export default function Clientes() {
       title: 'CPF/CNPJ',
       dataIndex: 'cpfCliente',
       key: 'cpfCliente',
+      render: (text: string, item: Cliente) => <a>{item.cpfCliente != '' ? item.cpfCliente : item.cnpjCliente}</a>,
+
     },
     {
       title: 'Email',
@@ -210,7 +262,7 @@ export default function Clientes() {
     <Home selected={['5']} container={['aplicativos']}>
       <S.ContainerModal>
         <S.Title style={{fontWeight: 'bold', fontSize: '20px'}}>
-            Planos
+        Clientes
         </S.Title>
         <S.ButtonNovo onClick={() => setModal(!modal)}>
           Novo +
@@ -226,13 +278,35 @@ export default function Clientes() {
       </S.Container> 
     </Home>
 
-    <S.ModalComponent footer={null} title="Novo plano" visible={modal} onCancel={() => setModal(!modal)}>
-      <Tabs defaultActiveKey={defaultActiveKey} onChange={callback}>
+    <S.ModalComponent footer={null} title={itemModal?.idCliente ? 'Editar Cliente' : 'Novo Cliente'} visible={modal} onCancel={() => setModal(!modal)}>
+      <Tabs defaultActiveKey={itemModal.cnpjCliente? '2' : '1'} onChange={callback}>
         <TabPane tab="Cliente Pessoa Física" key="1">
-          <FormPf form={form} onFinish={onFinish}/>
+          <FormPf form={form} onFinish={onFinish} itemModal={itemModal}/>
         </TabPane>
         <TabPane tab="Cliente Pessoa Jurídica" key="2">
-          <FormCnpj form={form} onFinish={onFinish}/>
+          <FormCnpj form={form} onFinish={onFinish} itemModal={itemModal}/>
+        </TabPane>
+      </Tabs>
+    </S.ModalComponent>
+
+    <S.ModalComponent footer={null} title={itemModal?.idCliente ? 'Editar Cliente' : 'Novo Cliente'} visible={modalPf} onCancel={() => setModalPf(!modalPf)}>
+      <Tabs defaultActiveKey='1' onChange={callback}>
+        <TabPane tab="Cliente Pessoa Física" key="1">
+          <FormPf form={form} onFinish={onFinish} itemModal={itemModal}/>
+        </TabPane>
+        <TabPane tab="Cliente Pessoa Jurídica" key="2" disabled>
+          <FormCnpj form={form} onFinish={onFinish} itemModal={itemModal}/>
+        </TabPane>
+      </Tabs>
+    </S.ModalComponent>
+
+    <S.ModalComponent footer={null} title={itemModal?.idCliente ? 'Editar Cliente' : 'Novo Cliente'} visible={modalPj} onCancel={() => setModalPj(!modalPj)}>
+      <Tabs defaultActiveKey='2' onChange={callback}>
+        <TabPane tab="Cliente Pessoa Física" key="1" disabled>
+          <FormPf form={form} onFinish={onFinish} itemModal={itemModal}/>
+        </TabPane>
+        <TabPane tab="Cliente Pessoa Jurídica" key="2">
+          <FormCnpj form={form} onFinish={onFinish} itemModal={itemModal}/>
         </TabPane>
       </Tabs>
     </S.ModalComponent>

@@ -23,7 +23,7 @@ export type Cidades = {
   ibge: Number
 }
 
-export default function FormPf({onFinish, form}: any) {
+export default function FormPf({onFinish, form, itemModal}: any) {
   const { Option } = Select;
   const [ estados, setEstados] = useState<Estados[]>([] as Estados[])
   const [ cidades, setCidades] = useState<Cidades[]>([] as Cidades[])
@@ -242,7 +242,8 @@ export default function FormPf({onFinish, form}: any) {
               <Form.Item
                 name="docCarteiraMotorista"
                 label="Carteira de motorista"
-              >
+                style={{ display: 'inline-block', width: 'calc(48%)' }}
+                >
                 <Upload >
                   <S.ButtonForm style={{color: 'black'}} type="default" className="login-form-button">Enviar Imagem</S.ButtonForm>
                 </Upload>
@@ -250,7 +251,8 @@ export default function FormPf({onFinish, form}: any) {
               <Form.Item
                 name="docComprovanteResidencia"
                 label="Comprovante de residência"
-              >
+                style={{ display: 'inline-block', width: 'calc(48%)' }}
+                >
                 <Upload >
                   <S.ButtonForm style={{color: 'black'}} type="default" className="login-form-button">Enviar Imagem</S.ButtonForm>
                 </Upload>
@@ -261,9 +263,27 @@ export default function FormPf({onFinish, form}: any) {
               >
                 <Input.Password />
               </Form.Item>
+              <Form.Item
+                name="aprovacaoId"
+                label="Status"
+                style={{ display: 'inline-block', width: 'calc(48%)' }}
+                hasFeedback
+              >
+                <Select 
+                  placeholder="Escolha uma opção"
+                  showSearch
+                  optionFilterProp="children"
+                  style={{ cursor: 'pointer'}}
+                >
+                  <Option value={1}>Aprovado</Option>
+                  <Option value={2}>Reprovado</Option>
+                  <Option value={3}>Em Análise</Option>
+                  <Option value={4}>Desativado</Option>
+                </Select>
+              </Form.Item>
               <Form.Item>
                 <S.ButtonForm type="primary" htmlType="submit" className="login-form-button">
-                  Cadastrar
+                {itemModal?.idCliente ? 'Editar Cliente' : 'Novo Cliente'}
                 </S.ButtonForm>
               </Form.Item>
               </S.WrapperForm>

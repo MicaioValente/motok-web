@@ -15,7 +15,7 @@ export type Cliente = {
     codigoCliente: string
     complementoEnderecoCliente: string
     cpfCliente: string
-    dataAberturaEmpresaCliente: string | null
+    dataAberturaEmpresaCliente: string | null | moment.Moment
     datecreate: string
     datemodified: string
     diaNascimento: string

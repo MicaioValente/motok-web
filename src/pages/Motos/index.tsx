@@ -23,6 +23,7 @@ export type Motos = {
 
 export default function Notificacoes() {  
   const [ modal, setModal] = useState(false)
+  const [ trigger, setTrigger] = useState(false)
   const [ data, setData ] = useState<Motos[]>([] as Motos[])
   const [ clientes, setClientes ] = useState<Cliente[]>([] as Cliente[])
   const [form] = Form.useForm();
@@ -45,7 +46,7 @@ export default function Notificacoes() {
       });
     }
     getVeiculo();
-  }, []);
+  }, [trigger]);
 
   useEffect(() => {
     if(!modal){
@@ -64,22 +65,13 @@ export default function Notificacoes() {
   }
   
   const onFinish = (values: any) => {
-
-    let teste = {
-      marcaModelo: "aaa",
-      placa: "aa",
-      renavam: "aaa",
-      chassi: 2020,
-      anoFabricacao: 2001,
-      anoModelo: 2011,
-    }
-
     if(itemModal?.idVeiculo){
-      onEdit(values)
+    onEdit(values)
       return
     }
-    api.post('veiculo', teste ).then(function(response) {
+    api.post('veiculo', values ).then(function(response) {
       setModal(false)
+      setTrigger(!trigger)
     }).catch(function(response) {
       toast.error('Moto não foi salva com sucesso')
       })
@@ -87,7 +79,8 @@ export default function Notificacoes() {
   
   const onEdit = (values: Motos) => {
     api.put(`veiculo/${itemModal.idVeiculo}`, values ).then(function(response) {
-        setModal(false)
+    setTrigger(!trigger)
+    setModal(false)
     }).catch(function(response) {
       toast.error('Moto não foi salva com sucesso')
       })  
@@ -127,7 +120,7 @@ export default function Notificacoes() {
       title: 'Cliente',
       dataIndex: 'cliente',
       key: 'cliente',
-      render: (text: string) => <a>{text}</a>,
+      render: (text: Cliente) => <a>{text.nomeCliente}</a>,
     },
     {
       title: 'Data cadastro',
@@ -183,7 +176,6 @@ export default function Notificacoes() {
               <Form.Item
                 label="Placa"
                 name="placa"
-                rules={[{  message: 'Insira o Preço!'}]}
                 style={{ display: 'inline-block', width: 'calc(32%)' }}
               >
                 <Input  />
@@ -209,7 +201,6 @@ export default function Notificacoes() {
               <Form.Item
                 label="Ano Fabricação"
                 name="anoFabricacao"
-                rules={[{  message: 'Insira o Preço!'}]}
                 style={{ display: 'inline-block', width: 'calc(48%)' }}
               >
                 <Input  />
@@ -228,6 +219,7 @@ export default function Notificacoes() {
               <Form.Item
                 label="Escolha uma opção caso haja um cliente"
                 name="clienteId"
+                initialValue={itemModal?.cliente?.idCliente}
                 hasFeedback
               >
                 <Select placeholder="Escolha um cliente para notificar">

@@ -34,6 +34,7 @@ export default function Planos() {
     valorCalcao: '',
   })
   const [form] = Form.useForm();
+  const [ trigger, setTrigger] = useState(false)
 
   useEffect(() => {
     async function getPlanos() {
@@ -45,7 +46,7 @@ export default function Planos() {
       });
     }
     getPlanos();
-  }, []);
+  }, [trigger]);
 
   useEffect(() => {
     if(!modal){
@@ -81,32 +82,31 @@ export default function Planos() {
       return
     }
     api.post('planos', values ).then(function(response) {
+      setTrigger(!trigger)
       setModal(false)
-  }).catch(function(response) {
-    toast.error('Plano não foi salvo com sucesso')
-    })
+    }).catch(function(response) {
+      toast.error('Plano não foi salvo com sucesso')
+      })
+    };
+
+  const onEdit = (values: Planos) => {
+    let valor = {
+      idPlano: itemModal.idPlanos,
+    }
+    const dataRequest = Object.assign(values, valor)
+    api.put('planos', dataRequest ).then(function(response) {
+    setTrigger(!trigger)
+    setModal(false)
+    }).catch(function(response) {
+      toast.error('Plano não foi salvo com sucesso')
+      })  
   };
 
-const onEdit = (values: Planos) => {
-  let valor = {
-    idPlano: itemModal.idPlanos,
+  const setModalAndItem = (item:Planos) => {
+    setModal(!modal)
+    form.setFieldsValue(item)
+    setItemModal(item)
   }
-  const dataRequest = Object.assign(values, valor)
-  api.put('planos', dataRequest ).then(function(response) {
-      setModal(false)
-  }).catch(function(response) {
-    toast.error('Plano não foi salvo com sucesso')
-    })  
-};
-
-const setMaskPrice = (e: React.ChangeEvent<HTMLInputElement>) => {
-  setValuesFormated({ ...valuesFormated, [e.target.name]: e.target.value })
-}
-const setModalAndItem = (item:Planos) => {
-  setModal(!modal)
-  form.setFieldsValue(item)
-  setItemModal(item)
-}
 
   return (
   <>
